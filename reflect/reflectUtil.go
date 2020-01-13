@@ -9,29 +9,25 @@ import (
 类型反转换规则：
 
 如果是解析到一个指针，Unmarshal首先会检查是否是json字符null，如果是的话指针会设置为nil，其他情况Unmarshal会把值填充到指针所指的位置，如果是一个空指针则会分配一个新的位置。
-
 如果是解析到struct，Unmarshal会用struct的字段名或者`json`标签指定的名字和json的key相匹配。
-
 如果是解析到interface值，转化规则如下：
 1.bool对应JSON的boolean
 2.float64对应JSON的number，
 3.string对应JSON的string，
 4.[]interface{}对应JSON的array
 5.map[string]interface{}对应JSON的object
-
-nil对应JSON的null。
+6.nil对应JSON的null。
 */
+func Map2Struct(inStructPtr interface{}, filedMap map[string]interface{}) {
 
-func Map2Struct(obj interface{}, filedMap map[string]interface{}) {
-
-	getType := reflect.TypeOf(obj)
-	getValue := reflect.ValueOf(obj)
+	getType := reflect.TypeOf(inStructPtr)
+	getValue := reflect.ValueOf(inStructPtr)
 	if getType.Kind() == reflect.Ptr {
 		// 传入的inStructPtr是指针，需要.Elem()取得指针指向的value
 		getType = getType.Elem()
 		getValue = getValue.Elem()
 	} else {
-		panic("obj must be ptr to struct")
+		panic("inStructPtr must be ptr to struct")
 	}
 
 	for i := 0; i < getType.NumField(); i++ {
@@ -69,6 +65,9 @@ func Map2Struct(obj interface{}, filedMap map[string]interface{}) {
 	}
 }
 
+/**
+  根据sliceType填充slice类型
+*/
 func FillSlice(value reflect.Value, sliceType reflect.Kind) reflect.Value {
 
 	switch sliceType {
@@ -108,6 +107,9 @@ func FillSlice(value reflect.Value, sliceType reflect.Kind) reflect.Value {
 	return value
 }
 
+/**
+  根据mapType填充map类型
+*/
 func FillMap(value reflect.Value, mapType reflect.Kind) reflect.Value {
 	keys := value.MapKeys()
 	fieldValue := reflect.Value{}
@@ -165,6 +167,7 @@ func IsNil(value reflect.Value) bool {
 }
 
 /**
+该方法为兼容json默认转换类型导致与结构体类型不匹配问题
 类型兼容 int,int8,int32,int64 -> float64
         int,int8,int32,int64 -> int,int8,int32,int64
         int,int8,int32,int64 -> string
